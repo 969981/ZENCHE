@@ -6,6 +6,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Prefer the newest validation for the same branch/PR when commits arrive rapidly.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   native-regression:
     runs-on: ubuntu-latest

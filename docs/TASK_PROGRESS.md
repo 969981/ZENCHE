@@ -11,17 +11,17 @@
 - **分支**：基于 `main` 新建 [`develop`](https://github.com/969981/ZENCHE/tree/develop)，不修改正式发布分支、标签和生产更新端点。
 - **原生源码**：iOS/iPadOS `native/ios/NikonLink/Views/RootView.swift`、macOS `native/macos/Sources/NikonLink/main.swift` 及 `SettingsSheet.swift`、Android `MainActivity.java`、HarmonyOS `Index.ets`、Windows `MainWindow.xaml` / `MainWindow.xaml.cs` 均去除登录注册表单、登录态工作区门禁与设置页账号/退出登录入口；启动直进原生工作区。相机连接、拍摄、传输及编辑等原有模块未主动删除。
 - **AI 边界**：设备码与 AI 激活码相关逻辑未移除，云端服务仍执行既有配额/权益校验。服务端账号 API 与未使用的旧客户端认证服务暂保留兼容性，不能将其视为已彻底删除服务端账号数据库。
-- **测试改动与验证**：新增 `test/native-account-free-launch.test.mjs`；删除五份与“登录墙必须出现”相矛盾的旧 UI 契约测试；更新相机断连与 AI 客户端等关联契约。[develop Actions #43605909835](https://github.com/969981/ZENCHE/actions/runs/43605909835) 已完整执行 `npm test`，**612 项，603 通过、0 失败、9 跳过**。iOS、Android、Windows 编译与 macOS Swift 类型检查均成功。
-- **交付/签名**：阶段为 **源码与 CI 已验证，待正式签名、打包及实机验收**。上述 Actions 已产出 `ZENCHE-iOS-unsigned`（未签名 IPA）和 `ZENCHE-android`（调试 APK）两个 Artifacts；Windows `dotnet build` 与 macOS 无专有 SDK 条件下的类型检查成功，但无 Windows Setup/macOS DMG。HarmonyOS 因没有 DevEco/Hvigor 环境未编译 HAP。升级、重装后设备 ID 连续性和拍摄设备实测未验证，不得声称稳定版已升级。
-- **后续**：完成 Windows 原生打包、Android/iOS/macOS 构建校验、HarmonyOS 编译与实机回归，确认 AI 激活流程与所有工作区的无账号使用路径，再根据签名状态决定是否发布测试资产。
+- **测试改动与验证**：新增无账号路由、Windows/macOS PTP-only 预览安装隔离及五端公告本地化回归测试；删除五份与“必须显示登录墙”矛盾的旧 UI 契约，更新相机断连与 AI 客户端相关契约。[develop Actions #43610550807](https://github.com/969981/ZENCHE/actions/runs/43610550807) 已完整执行 `npm test`，**619 项，610 通过、0 失败、9 跳过**；iOS、Android、Windows、macOS 构建全部成功。
+- **交付/签名**：阶段为 **四平台测试包构建通过，待完整 SDK/正式签名/实机验收**。最新 CI 已产出未签名 iOS IPA、调试 Android APK、独立 Windows PTP-only Setup/ZIP 与 macOS PTP-only ad-hoc DMG；缺专有 Nikon/Sony SDK 的后两者不等于完整正式版。HarmonyOS 没有 DevEco/Hvigor 环境未编译 HAP。升级、重装后设备 ID 连续性和真实相机拍摄实测未验证，稳定版未升级。
+- **后续**：获取匹配的 HarmonyOS DevEco/Hvigor 工具链与官方 SDK 以构建 HAP；为 Windows/macOS 完整包提供合规厂商 SDK 与稳定签名；在五端真实设备上测试无账号启动、相机控制、AI 激活及升级/卸载重装后的设备 ID 连续性，再决定正式发布。
 
 ## 2026-11-14：develop 可下载预览包及签名边界
 
-- **验证**：[Actions #43609315150](https://github.com/969981/ZENCHE/actions/runs/43609315150) 的 `native-regression`、`ios`、`android`、`windows`、`macos` 五项 Job 均为 success；原生免登录启动和 PTP-only SDK 回退测试随 `npm test` 执行。
-- **Windows**：Artifact `ZENCHE-Windows-develop-PTP-only`（ID 14119800711），包含独立 per-user Setup、便携 ZIP 与 SHA-256。无厂商专有 SDK、非正式签名，未做实体安装/真实相机验收。
-- **macOS**：Artifact `ZENCHE-macOS-develop-PTP-only`（ID 14119653143），包含独立 Bundle ID、ad-hoc 签名 DMG 与 SHA-256。Sony 原生 SDK 桥接明确返回不可用；尼康/索尼厂商 SDK 未集成。
-- **iOS / iPadOS**：Artifact `ZENCHE-iOS-unsigned`（ID 14119014908），IPA 未签名，不能按正式升级交付。
-- **Android**：Artifact `ZENCHE-android`（ID 14118909996），调试签名 APK；签名身份可能不匹配正式版，不能用于无损原地升级验证。
+- **验证**：[Actions #43610550807](https://github.com/969981/ZENCHE/actions/runs/43610550807) 的 `native-regression`、`ios`、`android`、`windows`、`macos` 五项 Job 均为 success；**619 项测试中 610 通过、0 失败、9 跳过**，涵盖无账号启动、多语言预览公告和 PTP-only SDK 回退。
+- **Windows**：Artifact `ZENCHE-Windows-develop-PTP-only`（ID 14120136803），包含独立 per-user Setup、便携 ZIP 与 SHA-256。无厂商专有 SDK、非正式签名，未做实体安装/真实相机验收。
+- **macOS**：Artifact `ZENCHE-macOS-develop-PTP-only`（ID 14119847858），包含独立 Bundle ID、ad-hoc 签名 DMG 与 SHA-256。Sony 原生 SDK 桥接明确返回不可用；尼康/索尼厂商 SDK 未集成。
+- **iOS / iPadOS**：Artifact `ZENCHE-iOS-unsigned`（ID 14119882372），IPA 未签名，不能按正式升级交付。
+- **Android**：Artifact `ZENCHE-android`（ID 14119134685），调试签名 APK；签名身份可能不匹配正式版，不能用于无损原地升级验证。
 - **HarmonyOS**：无 HAP；仓库 `native/harmony` 目标 5.0.0/API12，GitHub 公共 Runner 未预装所需 DevEco/Hvigor/SDK，暂无官方匹配签名；正式 HAP 与硬件测试阻塞。
 - **更新公告**：五端新增 develop 无账号启动、AI 仍需激活码及 Windows/macOS PTP-only 限制说明。
 - **发布边界**：`main`、现有标签和生产更新通道不改动；仍须完成五端实体设备功能验证、签名身份与升级/卸载重装后设备码稳定性测试。

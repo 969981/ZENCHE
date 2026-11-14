@@ -9,11 +9,11 @@
 - 分支：[develop](https://github.com/969981/ZENCHE/tree/develop)，从 `main` 创建；该分支为实验性原生工作区改造，`main` 和现有稳定版 `1.5.15` 不受影响。
 - 五端原生 iOS/iPadOS、Android、HarmonyOS、macOS 和 Windows 启动后直接进入相机与影像工作区，不提供注册、登录、创建账号、退出登录等账号界面或启动认证墙；相机连接、实时监看、拍摄、文件库、传输、设置等工作区仍保留。
 - AI 使用原有设备标识、激活码及服务端配额体系；免账号启动 **不等于 AI 云端功能免费或免激活**。旧的账号服务端 API 与认证类文件暂保留以免破坏已有客户端及迁移数据，但不再阻断 `develop` 五端本地工作区。
-- 发布与质量：2026-11-14 的 [develop CI Run 43605909835](https://github.com/969981/ZENCHE/actions/runs/43605909835) 五个 Job 全部通过，Node 测试 612 项（603 通过、9 跳过）；产生 iOS 未签名 IPA 与 Android 调试 APK。Windows 已编译，macOS 已完成 Swift 类型检查，但专有 SDK 不在 CI 仓库，尚无 Windows Setup/macOS DMG；HarmonyOS 缺 DevEco 工具链尚未编译。签名连续性和五端实机验证尚未完成，不得替代现有稳定版。
+- 发布与质量：2026-11-14 的 [develop CI Run 43610550807](https://github.com/969981/ZENCHE/actions/runs/43610550807) 五项 Job 全部通过：619 项测试中 610 通过、0 失败、9 跳过；成功构建未签名 iOS IPA、Android 调试 APK、Windows 独立 PTP-only Setup/ZIP 和 macOS PTP-only DMG。HarmonyOS 缺 DevEco/Hvigor 工具链未编译，正式签名及五端实机和设备码升级连续性尚未验证，不得替代现有稳定版。
 
 ## develop 预览交付现状（2026-11-14）
 
-- [Actions 完整验证](https://github.com/969981/ZENCHE/actions/runs/43609315150)：五项 Jobs（Node 回归、iOS、Android、Windows、macOS）全部成功，已上传 unsigned iOS IPA、debug Android APK、Windows 独立安装器与 ZIP、macOS ad-hoc DMG（含对应 SHA-256 侧车）。
+- [Actions 完整验证](https://github.com/969981/ZENCHE/actions/runs/43610550807)：五项 Jobs（Node 回归、iOS、Android、Windows、macOS）全部成功，619 项测试 610 通过、0 失败、9 跳过；已上传 unsigned iOS IPA、debug Android APK、Windows 独立安装器与 ZIP、macOS ad-hoc DMG（含对应 SHA-256 侧车）。
 - Windows / macOS 标注 `develop-PTP-only`，不捆绑 Nikon Remote SDK、Nikon Image SDK、Sony Camera Remote SDK，不得承诺厂商专用功能完整可用。Windows 使用 HKCU、独立安装目录、快捷方式和卸载注册表项；macOS 使用独立 Bundle ID 和独立 .app 名称，不替换正式版；两个预览包均非正式升级。
 - iOS 未签名 IPA 和 Android debug APK 均不能替代正式签名更新。HarmonyOS 5.0 / API12 工程尚需 DevEco/Hvigor 工具链及相应签名配置，尚未生成 HAP。真实设备上的连接、拍摄、重装后设备码连续性均须继续验收。
 - AI 设备绑定及配额保留，旧账号 API 仅留作历史客户端兼容；原生五端启动入口不再要求账号。

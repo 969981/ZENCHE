@@ -25,7 +25,7 @@
 
 ### develop 开发分支：无需账号的原生工作区
 
-测试产物：[2026-11-14 成功构建](https://github.com/969981/ZENCHE/actions/runs/43609315150)。可获取 Windows 独立安装器/便携 ZIP、macOS DMG、Android 调试 APK、iOS 未签名 IPA（均含相应 SHA-256 侧车）。**Windows/macOS 为不含 Nikon/Sony 专有 SDK 的 PTP-only 预览包**，不可替代正式签名更新；独立安装也不能证明设备码/AI 激活码迁移兼容。HarmonyOS HAP 因 DevEco/Hvigor 工具链缺失尚未生成，真实相机验收待完成。
+测试产物：[2026-11-14 成功构建](https://github.com/969981/ZENCHE/actions/runs/43610550807)。可获取 Windows 独立安装器/便携 ZIP、macOS DMG、Android 调试 APK、iOS 未签名 IPA（均含相应 SHA-256 侧车）。**Windows/macOS 为不含 Nikon/Sony 专有 SDK 的 PTP-only 预览包**，不可替代正式签名更新；独立安装也不能证明设备码/AI 激活码迁移兼容。HarmonyOS HAP 因 DevEco/Hvigor 工具链缺失尚未生成，真实相机验收待完成。
 
 [`develop` 分支](https://github.com/969981/ZENCHE/tree/develop)在 iOS/iPadOS、Android、HarmonyOS、macOS 和 Windows 上移除了注册、登录、创建账号及退出登录界面，启动即可进入相机控制、拍摄、影像传输和文件库等原生功能。**这只是开发分支源码，尚未完成所有平台构建、签名和实机验证，不是 1.5.15 稳定版更新。** AI 云端功能依然按照既有设备激活码和配额验证，不因取消登录而免费；现有服务端账号 API 暂留旧版兼容。
 
@@ -448,7 +448,7 @@ Nikon 及文中相机型号为 Nikon Corporation 的商标。本项目与 Nikon 
 
 ### develop branch: native workspace without account sign-in
 
-Test artifacts: [successful 2026-11-14 build](https://github.com/969981/ZENCHE/actions/runs/43609315150). The run provides a separately installed Windows Setup/ZIP, a macOS DMG, an Android debug APK and an unsigned iOS IPA, with SHA-256 sidecars. **Windows/macOS are PTP-only previews without proprietary Nikon/Sony SDK runtimes**, not signed official updates; separate installations do not validate device-ID or AI activation migration. HarmonyOS HAP remains blocked by the missing DevEco/Hvigor toolchain, and real-camera tests are pending.
+Test artifacts: [successful 2026-11-14 build](https://github.com/969981/ZENCHE/actions/runs/43610550807). The run provides a separately installed Windows Setup/ZIP, a macOS DMG, an Android debug APK and an unsigned iOS IPA, with SHA-256 sidecars. **Windows/macOS are PTP-only previews without proprietary Nikon/Sony SDK runtimes**, not signed official updates; separate installations do not validate device-ID or AI activation migration. HarmonyOS HAP remains blocked by the missing DevEco/Hvigor toolchain, and real-camera tests are pending.
 
 The [`develop` branch](https://github.com/969981/ZENCHE/tree/develop) removes the sign-in, registration, account creation, and sign-out screens on iOS/iPadOS, Android, HarmonyOS, macOS, and Windows. The native camera, capture, transfer, and library workspaces open directly. **This is development-branch source code, not a validated, signed, or officially released update to v1.5.15.** Cloud AI still requires the existing device activation and quota entitlement; legacy account server endpoints remain for backwards compatibility.
 
@@ -832,7 +832,7 @@ project is not affiliated with, endorsed by, or sponsored by Nikon Corporation.
 
 ### develop 開発ブランチ：アカウント不要のネイティブ画面
 
-テスト用ファイル：[2026-11-14 の成功したビルド](https://github.com/969981/ZENCHE/actions/runs/43609315150)。Windows の独立インストーラー/ZIP、macOS DMG、Android のデバッグ APK、署名なし iOS IPA と SHA-256 照合ファイルが取得できます。**Windows/macOS は Nikon/Sony の専用 SDK を含まない PTP-only プレビュー版**で、正式署名された更新ではありません。別アプリとしてのインストールはデバイス ID や AI 有効化の移行互換性を保証しません。HarmonyOS HAP は DevEco/Hvigor がないため未作成で、実機テストも未完了です。
+テスト用ファイル：[2026-11-14 の成功したビルド](https://github.com/969981/ZENCHE/actions/runs/43610550807)。Windows の独立インストーラー/ZIP、macOS DMG、Android のデバッグ APK、署名なし iOS IPA と SHA-256 照合ファイルが取得できます。**Windows/macOS は Nikon/Sony の専用 SDK を含まない PTP-only プレビュー版**で、正式署名された更新ではありません。別アプリとしてのインストールはデバイス ID や AI 有効化の移行互換性を保証しません。HarmonyOS HAP は DevEco/Hvigor がないため未作成で、実機テストも未完了です。
 
 [`develop` ブランチ](https://github.com/969981/ZENCHE/tree/develop)では、iOS/iPadOS・Android・HarmonyOS・macOS・Windows のログイン、登録、アカウント作成、ログアウト画面を取り除き、起動後すぐにカメラ操作・撮影・画像転送・ライブラリなどのネイティブ機能を使用できます。**開発ブランチのソース変更であり、全環境でのビルド・署名・実機検証は未完了です。v1.5.15 の正式なアップデートではありません。** クラウド AI には引き続き機器のアクティベーションと利用枠が必要です。旧版との互換性のためサーバーのアカウント API は残しています。
 

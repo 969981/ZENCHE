@@ -3,7 +3,8 @@ param(
     [string]$Runtime = "win-x64",
     [string]$LibUsbDll = $env:NIKONLINK_LIBUSB_DLL,
     [string]$MakeNsisPath,
-    [switch]$FrameworkDependent
+    [switch]$FrameworkDependent,
+    [switch]$PreviewWithoutVendorSdk
 )
 
 $ErrorActionPreference = "Stop"
@@ -21,9 +22,10 @@ $Architecture = if ($Runtime -eq "win-arm64") { "arm64" } else { "x64" }
 $PackageVersion = "1.5.15"
 $BuildNumber = 42
 $FileVersion = "$PackageVersion.$BuildNumber"
-$ArchiveName = "ZENCHE-$PackageVersion-Windows-$Architecture.zip"
+$PreviewSuffix = if ($PreviewWithoutVendorSdk) { "-develop-PTP-only" } else { "" }
+$ArchiveName = "ZENCHE-$PackageVersion-Windows-$Architecture$PreviewSuffix.zip"
 $ArchivePath = Join-Path $DistDirectory $ArchiveName
-$InstallerName = "ZENCHE-$PackageVersion-Windows-$Architecture-Setup.exe"
+$InstallerName = "ZENCHE-$PackageVersion-Windows-$Architecture$PreviewSuffix-Setup.exe"
 $InstallerPath = Join-Path $DistDirectory $InstallerName
 $PublishGlob = if ($env:OS -eq "Windows_NT") {
     "$PublishDirectory\*"
@@ -109,46 +111,68 @@ if ($LASTEXITCODE -ne 0) {
 
 Copy-Item -LiteralPath $ResolvedLibUsb `
     -Destination (Join-Path $PublishDirectory "libusb-1.0.dll")
-$NikonImageArchive = if ([string]::IsNullOrWhiteSpace($env:NIKON_IMAGE_SDK_ZIP)) {
-    Join-Path $ProjectRoot "S-SDKNEF-001BF-ALLIN.zip"
-} else { $env:NIKON_IMAGE_SDK_ZIP }
-$NikonRemoteArchive = if ([string]::IsNullOrWhiteSpace($env:NIKON_REMOTE_SDK_ZIP)) {
-    Join-Path $ProjectRoot "S-SDKZ-200BF-ALLIN.zip"
-} else { $env:NIKON_REMOTE_SDK_ZIP }
-if ((Test-Path -LiteralPath $NikonImageArchive -PathType Leaf) -and
-    (Test-Path -LiteralPath $NikonRemoteArchive -PathType Leaf)) {
-    & $PrepareNikonSdk -OutputDirectory $NikonSdkRoot
-    if ($LASTEXITCODE -ne 0) {
-        throw "Preparing the Nikon SDK runtime failed with exit code $LASTEXITCODE."
+if (-not $PreviewWithoutVendorSdk) {
+    $NikonImageArchive = if ([string]::IsNullOrWhiteSpace($env:NIKON_IMAGE_SDK_ZIP)) {
+        Join-Path $ProjectRoot "S-SDKNEF-001BF-ALLIN.zip"
+    } else { $env:NIKON_IMAGE_SDK_ZIP }
+    $NikonRemoteArchive = if ([string]::IsNullOrWhiteSpace($env:NIKON_REMOTE_SDK_ZIP)) {
+        Join-Path $ProjectRoot "S-SDKZ-200BF-ALLIN.zip"
+    } else { $env:NIKON_REMOTE_SDK_ZIP }
+    if ((Test-Path -LiteralPath $NikonImageArchive -PathType Leaf) -and
+        (Test-Path -LiteralPath $NikonRemoteArchive -PathType Leaf)) {
+        & $PrepareNikonSdk -OutputDirectory $NikonSdkRoot
+        if ($LASTEXITCODE -ne 0) {
+            throw "Preparing the Nikon SDK runtime failed with exit code $LASTEXITCODE."
+        }
+    } elseif (-not (Test-Path -LiteralPath (Join-Path $NikonSdkRoot "Image/NkImgSDK.dll") -PathType Leaf) -or
+              -not (Test-Path -LiteralPath (Join-Path $NikonSdkRoot "Remote/ControlServiceLayer.dll") -PathType Leaf)) {
+        throw "Nikon SDK archives and prepared Windows runtime are both unavailable."
     }
-} elseif (-not (Test-Path -LiteralPath (Join-Path $NikonSdkRoot "Image/NkImgSDK.dll") -PathType Leaf) -or
-          -not (Test-Path -LiteralPath (Join-Path $NikonSdkRoot "Remote/ControlServiceLayer.dll") -PathType Leaf)) {
-    throw "Nikon SDK archives and prepared Windows runtime are both unavailable."
-}
-Copy-Item -LiteralPath $NikonSdkRoot `
-    -Destination (Join-Path $PublishDirectory "NikonSDK") -Recurse -Force
-$SonyArchive = if ([string]::IsNullOrWhiteSpace($env:SONY_CRSDK_WIN64_ZIP)) {
-    Join-Path $ProjectRoot "CrSDK_v2.02.00_20260610a_Win64.zip"
-} else { $env:SONY_CRSDK_WIN64_ZIP }
-if (Test-Path -LiteralPath $SonyArchive -PathType Leaf) {
-    & $PrepareSonySdk -OutputDirectory $SonySdkRoot
-    if ($LASTEXITCODE -ne 0) {
-        throw "Preparing the Sony Camera Remote SDK runtime failed with exit code $LASTEXITCODE."
+    Copy-Item -LiteralPath $NikonSdkRoot `
+        -Destination (Join-Path $PublishDirectory "NikonSDK") -Recurse -Force
+    $SonyArchive = if ([string]::IsNullOrWhiteSpace($env:SONY_CRSDK_WIN64_ZIP)) {
+        Join-Path $ProjectRoot "CrSDK_v2.02.00_20260610a_Win64.zip"
+    } else { $env:SONY_CRSDK_WIN64_ZIP }
+    if (Test-Path -LiteralPath $SonyArchive -PathType Leaf) {
+        & $PrepareSonySdk -OutputDirectory $SonySdkRoot
+        if ($LASTEXITCODE -ne 0) {
+            throw "Preparing the Sony Camera Remote SDK runtime failed with exit code $LASTEXITCODE."
+        }
+    } elseif (-not (Test-Path -LiteralPath (Join-Path $SonySdkRoot "Cr_Core.dll") -PathType Leaf) -or
+              -not (Test-Path -LiteralPath (Join-Path $SonySdkRoot "CrAdapter/Cr_PTP_USB.dll") -PathType Leaf)) {
+        throw "Sony SDK archive and prepared Windows runtime are both unavailable."
     }
-} elseif (-not (Test-Path -LiteralPath (Join-Path $SonySdkRoot "Cr_Core.dll") -PathType Leaf) -or
-          -not (Test-Path -LiteralPath (Join-Path $SonySdkRoot "CrAdapter/Cr_PTP_USB.dll") -PathType Leaf)) {
-    throw "Sony SDK archive and prepared Windows runtime are both unavailable."
+    Get-ChildItem -LiteralPath $SonySdkRoot -Filter "*.dll" -File |
+        Copy-Item -Destination $PublishDirectory -Force
+    Copy-Item -LiteralPath (Join-Path $SonySdkRoot "CrAdapter") `
+        -Destination (Join-Path $PublishDirectory "CrAdapter") -Recurse -Force
+    Copy-Item -LiteralPath (Join-Path $SonySdkRoot "documentation") `
+        -Destination (Join-Path $PublishDirectory "SonySDK") -Recurse -Force
+
+} else {
+    Write-Warning "DEVELOP PTP-ONLY PREVIEW: Nikon/Sony proprietary SDK runtimes are intentionally excluded."
+    Write-Warning "Official Nikon/Sony SDK capture and proprietary image-processing functions will be unavailable."
 }
-Get-ChildItem -LiteralPath $SonySdkRoot -Filter "*.dll" -File |
-    Copy-Item -Destination $PublishDirectory -Force
-Copy-Item -LiteralPath (Join-Path $SonySdkRoot "CrAdapter") `
-    -Destination (Join-Path $PublishDirectory "CrAdapter") -Recurse -Force
-Copy-Item -LiteralPath (Join-Path $SonySdkRoot "documentation") `
-    -Destination (Join-Path $PublishDirectory "SonySDK") -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "LICENSE") `
     -Destination (Join-Path $PublishDirectory "LICENSE.txt")
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "THIRD_PARTY_NOTICES.md") `
     -Destination (Join-Path $PublishDirectory "THIRD_PARTY_NOTICES.md")
+
+if ($PreviewWithoutVendorSdk) {
+    $notice = @'
+ZENCHE develop PTP-only preview (UNOFFICIAL)
+This is a test build of the account-free develop branch.
+It does not include Nikon Remote SDK, Nikon Image SDK, or Sony Camera Remote SDK.
+Camera features requiring those proprietary runtimes will not work.
+Generic USB/PTP/IP, local library, and other modules are not guaranteed until hardware testing.
+The preview installer uses a separate per-user install directory and registry identity.
+This is NOT a signed official update and must not replace the stable build.
+'@
+    [IO.File]::WriteAllText(
+        (Join-Path $PublishDirectory "README-DEVELOP-PTP-ONLY.txt"),
+        $notice,
+        [Text.UTF8Encoding]::new($false))
+}
 
 if (Test-Path -LiteralPath $ArchivePath) {
     Remove-Item -LiteralPath $ArchivePath -Force
@@ -162,15 +186,19 @@ if (Test-Path -LiteralPath $InstallerPath) {
     Remove-Item -LiteralPath $InstallerPath -Force
 }
 $NsisOptionPrefix = if ($env:OS -eq "Windows_NT") { "/" } else { "-" }
-& $ResolvedMakeNsis `
-    "${NsisOptionPrefix}V2" `
-    "${NsisOptionPrefix}DPRODUCT_VERSION=$PackageVersion" `
-    "${NsisOptionPrefix}DFILE_VERSION=$FileVersion" `
-    "${NsisOptionPrefix}DAPP_ARCHITECTURE=$Architecture" `
-    "${NsisOptionPrefix}DPUBLISH_GLOB=$PublishGlob" `
-    "${NsisOptionPrefix}DPROJECT_ROOT=$ProjectRoot" `
-    "${NsisOptionPrefix}DOUTPUT_FILE=$InstallerPath" `
-    $InstallerScript
+$NsisArguments = @(
+    "${NsisOptionPrefix}V2"
+    "${NsisOptionPrefix}DPRODUCT_VERSION=$PackageVersion"
+    "${NsisOptionPrefix}DFILE_VERSION=$FileVersion"
+    "${NsisOptionPrefix}DAPP_ARCHITECTURE=$Architecture"
+    "${NsisOptionPrefix}DPUBLISH_GLOB=$PublishGlob"
+    "${NsisOptionPrefix}DPROJECT_ROOT=$ProjectRoot"
+    "${NsisOptionPrefix}DOUTPUT_FILE=$InstallerPath"
+)
+if ($PreviewWithoutVendorSdk) {
+    $NsisArguments += "${NsisOptionPrefix}DZENCH_DEVELOP_PREVIEW"
+}
+& $ResolvedMakeNsis @NsisArguments $InstallerScript
 if ($LASTEXITCODE -ne 0) {
     throw "NSIS failed with exit code $LASTEXITCODE."
 }

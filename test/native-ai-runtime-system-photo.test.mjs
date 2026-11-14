@@ -20,13 +20,10 @@ test("five native AI clients use the production HTTPS proxy and migrate only the
     assert.match(source, /http:\/\/101\.34\.255\.115:8787/);
     assert.match(source, /\/v1\/ai/);
   }
-  // 免账号原生工作区：Apple / Windows 旧版可选账号令牌仍可兼容，
-  // Android / HarmonyOS 不再为 AI 请求读取登录会话，服务端设备码权益独立验证。
-  for (const source of [ios, macos, windows]) {
-    assert.match(source, /Bearer/);
+  // develop 五端均不再把账号会话令牌发送到 AI 服务。
+  for (const source of [ios, android, harmony, macos, windows]) {
+    assert.doesNotMatch(source, /Bearer/);
   }
-  assert.doesNotMatch(android, /authManager\.getToken\(\)/);
-  assert.doesNotMatch(harmony, /authManagerRef\.getToken\(\)/);
   assert.match(android, /AI_SERVER_LEGACY\.equals\(normalized\)/);
   assert.match(harmony, /normalized === AI_SERVER_LEGACY/);
   assert.match(ios, /normalized == legacyServer/);

@@ -1695,9 +1695,8 @@ public final class MainActivity extends Activity {
         while (normalized.endsWith("/")) {
             normalized = normalized.substring(0, normalized.length() - 1);
         }
-        // The original public IP endpoint is retired and cannot carry the
-        // account Bearer token. Migrate only that exact historical default;
-        // keep any explicit self-hosted override intact for compatibility.
+        // The original public IP endpoint is retired. Migrate only that exact
+        // historical default; keep explicit self-hosted overrides intact.
         if (normalized.isEmpty() || AI_SERVER_LEGACY.equals(normalized)) {
             return AI_SERVER_DEFAULT;
         }

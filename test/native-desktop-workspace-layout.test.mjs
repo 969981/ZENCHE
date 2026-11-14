@@ -202,8 +202,8 @@ test('桌面编辑预览合并高频更新并复用同一帧生成波形', async
   assert.match(waveform, /return;[\s\S]{0,120}_red = red/);
 });
 
-test('登录墙继续位于工作区分隔条之上', async () => {
+test('免账号桌面工作区保留分隔条，不再覆盖登录墙', async () => {
   const xaml = await read('native/windows/MainWindow.xaml');
-  assert.match(xaml, /x:Name="AuthWall"[\s\S]*Panel\.ZIndex="100"/);
+  assert.doesNotMatch(xaml, /x:Name="AuthWall"/);
   assert.match(xaml, /GridSplitter[\s\S]{0,360}Panel\.ZIndex="20"/);
 });

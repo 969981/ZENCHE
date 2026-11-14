@@ -794,7 +794,6 @@ public partial class MainWindow : Window
     private readonly WirelessTransferServer _wirelessServer;
     private readonly DiagnosticLogger _diagnostics = DiagnosticLogger.Shared;
     private readonly UpdateService _updateService = new();
-    private readonly AuthService _authService = new();
     private WorkspaceLayoutState _workspaceLayout = LoadWorkspaceLayout();
     private string _currentDestination = "capture";
     private readonly List<LibraryBranch> _libraryBranches;
@@ -1341,13 +1340,7 @@ public partial class MainWindow : Window
             request.Content.Headers.ContentType =
                 new System.Net.Http.Headers.MediaTypeHeaderValue(
                     "application/json");
-            var accountToken = _authService.GetToken();
-            if (!string.IsNullOrWhiteSpace(accountToken))
-            {
-                request.Headers.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue(
-                        "Bearer", accountToken);
-            }
+            // develop: 设备 AI 激活服务无需账号访问令牌。
             using var response = await client.SendAsync(
                 request,
                 HttpCompletionOption.ResponseHeadersRead);
@@ -10520,17 +10513,7 @@ public partial class MainWindow : Window
             {
                 Content = content
             };
-            var accountToken = _authService.GetToken();
-            if (Uri.TryCreate(endpoint, UriKind.Absolute, out var aiEndpoint)
-                && aiEndpoint.Scheme.Equals(
-                    Uri.UriSchemeHttps,
-                    StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(accountToken))
-            {
-                request.Headers.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue(
-                        "Bearer", accountToken);
-            }
+            // develop: AI 配额与激活凭设备 ID + 激活码判断。
             using var response = await client.SendAsync(request);
             var serverRemaining = ReadServerRemainingUsage(response);
             if (!response.IsSuccessStatusCode)

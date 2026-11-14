@@ -10882,12 +10882,7 @@ private final class AiImageService {
         var r = URLRequest(url: url); r.httpMethod = "POST"
         r.setValue("application/json", forHTTPHeaderField: "Content-Type")
         r.timeoutInterval = 300
-        // W13-c：登录墙下 AI 激活请求带上会话令牌，服务端记录 账号↔设备↔激活码 三元组；
-        // 无令牌（存量流程/异常态）不影响既有请求。
-        if url.scheme?.lowercased() == "https",
-           let token = AuthTokenStore.readToken() {
-            r.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        // develop: AI 按设备激活码校验，不再携带历史账号访问令牌。
         r.httpBody = try JSONEncoder().encode(req)
         let (data, resp) = try await URLSession.shared.data(for: r)
         guard let hr = resp as? HTTPURLResponse else { throw AiServiceError.networkError }

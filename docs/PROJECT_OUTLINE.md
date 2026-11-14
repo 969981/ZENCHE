@@ -9,7 +9,7 @@
 - 分支：[develop](https://github.com/969981/ZENCHE/tree/develop)，从 `main` 创建；该分支为实验性原生工作区改造，`main` 和现有稳定版 `1.5.15` 不受影响。
 - 五端原生 iOS/iPadOS、Android、HarmonyOS、macOS 和 Windows 启动后直接进入相机与影像工作区，不提供注册、登录、创建账号、退出登录等账号界面或启动认证墙；相机连接、实时监看、拍摄、文件库、传输、设置等工作区仍保留。
 - AI 使用原有设备标识、激活码及服务端配额体系；免账号启动 **不等于 AI 云端功能免费或免激活**。旧的账号服务端 API 与认证类文件暂保留以免破坏已有客户端及迁移数据，但不再阻断 `develop` 五端本地工作区。
-- 发布与质量：当前为分支源代码变更，尚无签名连续性、安装包和五端实机验收结论；不能作为正式版本或替换稳定版更新通道。
+- 发布与质量：2026-11-14 的 [develop CI Run 43605909835](https://github.com/969981/ZENCHE/actions/runs/43605909835) 五个 Job 全部通过，Node 测试 612 项（603 通过、9 跳过）；产生 iOS 未签名 IPA 与 Android 调试 APK。Windows 已编译，macOS 已完成 Swift 类型检查，但专有 SDK 不在 CI 仓库，尚无 Windows Setup/macOS DMG；HarmonyOS 缺 DevEco 工具链尚未编译。签名连续性和五端实机验证尚未完成，不得替代现有稳定版。
 
 ## 1. 项目定位
 

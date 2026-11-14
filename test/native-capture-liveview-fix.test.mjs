@@ -93,8 +93,9 @@ test('Android: fillStandardTopBar 摘除 logo/brand（保留连接/设置）', a
   assert.match(bar, /connectionDot/);
   assert.match(bar, /connectButton = nativeButton/);
   assert.match(bar, /settingsButton/);
-  // brandGradient 仅保留给登录墙 compact Z mark；splash 按 design.md 改为 graphite。
-  assert.match(main, /brandGradient\(20\)/);
+  // develop 已移除登录墙，因此不应残留登录墙专用 compact Z mark；
+  // 启动 splash 仍使用 graphite 品牌标。
+  assert.doesNotMatch(main, /brandGradient\(20\)/);
   assert.match(main, /markBox\.setBackground\(rounded\(GRAPHITE, 24, 0\)\)/);
 });
 

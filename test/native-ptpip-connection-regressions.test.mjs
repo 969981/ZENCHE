@@ -681,9 +681,9 @@ test('Harmony cancelled initial and reconnect attempts close returned sessions',
     index,
     'private async discardCancelledWifiConnection(',
   );
-  const authCleanup = blockStartingAt(
+  const disconnect = blockStartingAt(
     index,
-    'private async closeAuthSensitiveState()',
+    'private async disconnectWifiCamera(',
   );
 
   assert.match(
@@ -704,25 +704,22 @@ test('Harmony cancelled initial and reconnect attempts close returned sessions',
   );
   assert.match(cleanup, /await camera\.disconnect\(\)/);
   assert.match(cleanup, /finally \{[\s\S]*this\.wifiConnecting = false/);
-  const authCancellationBoundary = authCleanup.indexOf(
-    'this.stopWifiHeartbeat()',
-  );
-  const authWifiDisconnect = authCleanup.indexOf(
-    'await this.wifiCamera.disconnect()',
-  );
-  assert.notEqual(authCancellationBoundary, -1);
-  assert.notEqual(authWifiDisconnect, -1);
+  // develop 免账号路由不再有 logout 清理入口；手动断开继续防止
+  // Wi-Fi 连接、回调与定时器在断开后重新发布过期会话。
+  const cancellationBoundary = disconnect.indexOf('this.stopWifiHeartbeat()');
+  const wifiDisconnect = disconnect.indexOf('await camera.disconnect()');
+  assert.notEqual(cancellationBoundary, -1);
+  assert.notEqual(wifiDisconnect, -1);
   for (const cancellation of [
     'this.wifiManualDisconnect = true',
     'this.wifiReconnecting = false',
     'this.wifiConnecting = false',
   ]) {
-    const cancellationIndex = authCleanup.indexOf(cancellation);
-    assert.notEqual(cancellationIndex, -1, `missing ${cancellation}`);
+    const i = disconnect.indexOf(cancellation);
+    assert.notEqual(i, -1, `missing ${cancellation}`);
     assert.ok(
-      cancellationIndex < authCancellationBoundary &&
-        cancellationIndex < authWifiDisconnect,
-      `${cancellation} must precede auth cleanup timers and Wi-Fi disconnect`,
+      i < cancellationBoundary && i < wifiDisconnect,
+      `${cancellation} must precede timers and Wi-Fi transport shutdown`,
     );
   }
 });

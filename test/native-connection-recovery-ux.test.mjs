@@ -144,25 +144,15 @@ test('new connection UX labels are localized in English and Japanese', async () 
   );
 });
 
-test('authentication cleanup clears stale Wi-Fi failure presentation', async () => {
+test('account-free builds keep Wi-Fi error recovery independent of login state', async () => {
   const [android, harmony] = await Promise.all([
     read('native/android/app/src/main/java/com/tauber/nikonlink/MainActivity.java'),
     read('native/harmony/entry/src/main/ets/pages/Index.ets'),
   ]);
-
-  const androidCleanup = android.slice(
-    android.indexOf('private void closeAuthSensitiveState()'),
-    android.indexOf('private void updateAuthCodeRowVisibility()'),
-  );
-  assert.match(androidCleanup, /wifiLastConnectionError = null/);
-  assert.match(androidCleanup, /lastConnectionError = null/);
-
-  const harmonyCleanup = harmony.slice(
-    harmony.indexOf('private async closeAuthSensitiveState()'),
-    harmony.indexOf('private async initializeServices()'),
-  );
-  assert.match(harmonyCleanup, /this\.wifiLastConnectionError = ''/);
-  assert.match(harmonyCleanup, /this\.lastConnectionError = ''/);
+  assert.doesNotMatch(android, /closeAuthSensitiveState|showLoginWall/);
+  assert.doesNotMatch(harmony, /closeAuthSensitiveState|bootstrapAuthGuard/);
+  assert.match(android, /wifiLastConnectionError/);
+  assert.match(harmony, /wifiLastConnectionError/);
 });
 
 test('HarmonyOS connection overlay keeps actions reachable on small viewports', async () => {

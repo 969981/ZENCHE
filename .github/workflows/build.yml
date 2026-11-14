@@ -42,6 +42,35 @@ jobs:
             Write-Host "::notice::No Nikon/Sony SDK archives in Git checkout. Windows installer packaging is blocked; dotnet build validates source only."
           }
 
+      - name: Download official x64 libusb for a separate develop test installer
+        if: github.ref == 'refs/heads/develop'
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "libusb-1.0.29.7z"
+          $extractRoot = Join-Path $env:RUNNER_TEMP "libusb-1.0.29"
+          Invoke-WebRequest -Uri "https://github.com/libusb/libusb/releases/download/v1.0.29/libusb-1.0.29.7z" -OutFile $archive
+          7z x $archive "-o$extractRoot" -y
+          if ($LASTEXITCODE -ne 0) { throw "libusb extraction failed" }
+          $dll = Join-Path $extractRoot "VS2022\MS64\dll\libusb-1.0.dll"
+          if (-not (Test-Path -LiteralPath $dll)) { throw "Official x64 libusb DLL missing" }
+          "NIKONLINK_LIBUSB_DLL=$dll" >> $env:GITHUB_ENV
+      - name: Install NSIS for isolated develop preview
+        if: github.ref == 'refs/heads/develop'
+        shell: pwsh
+        run: choco install nsis --yes --no-progress
+      - name: Package independent Windows develop PTP-only test installer
+        if: github.ref == 'refs/heads/develop'
+        shell: pwsh
+        run: ./scripts/build-windows.ps1 -Runtime win-x64 -LibUsbDll $env:NIKONLINK_LIBUSB_DLL -PreviewWithoutVendorSdk
+      - uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/develop'
+        with:
+          name: ZENCHE-Windows-develop-PTP-only
+          if-no-files-found: error
+          path: |
+            dist/ZENCHE-*-Windows-x64-develop-PTP-only-Setup.exe*
+            dist/ZENCHE-*-Windows-x64-develop-PTP-only.zip*
+
   ios:
     runs-on: macos-15
     steps:

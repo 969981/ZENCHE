@@ -66,8 +66,8 @@ jobs:
         shell: bash
         run: |
           echo "ANDROID_HOME=${ANDROID_HOME:-}"
-          command -v sdkmanager
-          sdkmanager --version
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.10.2"

@@ -126,8 +126,17 @@ jobs:
       - name: Build macOS package with proprietary SDKs
         if: steps.proprietary_sdks.outputs.available == 'true'
         run: ./scripts/build-macos.sh
+      - name: Package isolated macOS develop PTP-only preview
+        if: steps.proprietary_sdks.outputs.available != 'true' && github.ref == 'refs/heads/develop'
+        run: ./scripts/build-macos.sh --preview-without-vendor-sdk
+      - uses: actions/upload-artifact@v4
+        if: steps.proprietary_sdks.outputs.available != 'true' && github.ref == 'refs/heads/develop'
+        with:
+          name: ZENCHE-macOS-develop-PTP-only
+          if-no-files-found: error
+          path: dist/ZENCHE-*-macOS-*-develop-PTP-only.dmg*
       - name: Type-check macOS source without proprietary runtimes
-        if: steps.proprietary_sdks.outputs.available != 'true'
+        if: steps.proprietary_sdks.outputs.available != 'true' && github.ref != 'refs/heads/develop'
         run: |
           xcrun swiftc -swift-version 5 -typecheck \
             -framework AppKit -framework SwiftUI -framework Photos \

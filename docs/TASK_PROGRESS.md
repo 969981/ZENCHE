@@ -6,6 +6,15 @@
 > 当前源码：1.5.15 / build 42，官网 SEO、相机 Wi-Fi 精确路由/恢复加固与六包已封板并完成 GitHub 发布，见 §12.66
 > 维护规则：每次完成实质性功能、验证、打包或发布工作后更新本文件；每次向 GitHub 上传源码、标签、Release 或附件后，还必须同步更新 `docs/PROJECT_OUTLINE.md`、`docs/TECHNICAL_APPROACH.md` 和本文件。不要只写“完成”，必须附版本、提交/标签、Release 链接、产物与 SHA-256、验证证据、签名状态、阻塞和下一步，作为项目长期记忆。
 
+## 2026-11-14：develop 分支免登录注册改造（已实现，待完整验收）
+
+- **分支**：基于 `main` 新建 [`develop`](https://github.com/969981/ZENCHE/tree/develop)，不修改正式发布分支、标签和生产更新端点。
+- **原生源码**：iOS/iPadOS `native/ios/NikonLink/Views/RootView.swift`、macOS `native/macos/Sources/NikonLink/main.swift` 及 `SettingsSheet.swift`、Android `MainActivity.java`、HarmonyOS `Index.ets`、Windows `MainWindow.xaml` / `MainWindow.xaml.cs` 均去除登录注册表单、登录态工作区门禁与设置页账号/退出登录入口；启动直进原生工作区。相机连接、拍摄、传输及编辑等原有模块未主动删除。
+- **AI 边界**：设备码与 AI 激活码相关逻辑未移除，云端服务仍执行既有配额/权益校验。服务端账号 API 与未使用的旧客户端认证服务暂保留兼容性，不能将其视为已彻底删除服务端账号数据库。
+- **测试改动**：新增 `test/native-account-free-launch.test.mjs`；删除五份与“登录墙必须出现”相矛盾的旧 UI 契约测试；`test/native-connection-recovery-ux.test.mjs` 更新免账号场景断言。已有其他测试需要通过 CI 全量复核。
+- **交付/签名**：阶段为 **源码已实现，待构建与实机验收**；尚无核实的 iOS IPA、Android APK、HarmonyOS HAP、macOS DMG 或 Windows Setup 正式签名安装包，也未验证升级、重装后设备码一致性。签名凭据和硬件实测是发布关口，不得声称稳定版已升级。
+- **后续**：完成 Windows 原生打包、Android/iOS/macOS 构建校验、HarmonyOS 编译与实机回归，确认 AI 激活流程与所有工作区的无账号使用路径，再根据签名状态决定是否发布测试资产。
+
 ## 1. 状态图例
 
 | 状态 | 含义 |

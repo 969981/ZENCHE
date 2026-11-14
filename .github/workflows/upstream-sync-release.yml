@@ -1,0 +1,128 @@
+name: Upstream sync and automatic test release
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: Rebuild even if upstream has not changed
+        type: boolean
+        default: true
+  schedule:
+    - cron: '39 */6 * * *'
+  push:
+    paths:
+      - '.github/workflows/upstream-sync-release.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-sync-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      upstream_sha: ${{ steps.check.outputs.upstream_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge new upstream commits without deleting local workflows
+        id: check
+        env:
+          UPSTREAM_REPO: Tauber01/ZENCHE
+          UPSTREAM_BRANCH: main
+          TARGET_BRANCH: main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream "https://github.com/$UPSTREAM_REPO.git"
+          git fetch --no-tags upstream "+refs/heads/$UPSTREAM_BRANCH:refs/remotes/upstream/$UPSTREAM_BRANCH"
+          upstream_sha="$(git rev-parse "refs/remotes/upstream/$UPSTREAM_BRANCH")"
+          echo "upstream_sha=$upstream_sha" >> "$GITHUB_OUTPUT"
+          if git merge-base --is-ancestor "$upstream_sha" HEAD; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Already synchronized."
+          else
+            git merge --no-edit -m "chore: sync upstream $upstream_sha" "$upstream_sha"
+            git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: sync
+    if: ${{ needs.sync.outputs.changed == 'true' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.force_build) }}
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Run source tests
+        run: npm test
+      - name: Build Android test-signed APK
+        run: ./scripts/build-android.sh
+      - name: Build unsigned iOS archive if Xcode is available
+        continue-on-error: true
+        run: ./scripts/build-ios.sh --unsigned
+      - name: Collect freely buildable mobile packages
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          test -n "$(find dist -maxdepth 1 -name 'ZENCHE-*-android.apk' -print -quit)"
+          (cd dist && shasum -a 256 ZENCHE-*-android.apk > AUTO-BUILD-SHA256.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    needs: [sync, build]
+    if: ${{ needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+          path: dist
+      - name: Derive unique upstream release tag
+        id: meta
+        env:
+          UPSTREAM_SHA: ${{ needs.sync.outputs.upstream_sha }}
+        run: |
+          short_sha="$(printf '%s' "$UPSTREAM_SHA" | cut -c1-12)"
+          echo "tag=upstream-$short_sha" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          target_commitish: main
+          name: "ZENCHE automated build ${{ steps.meta.outputs.tag }}"
+          prerelease: true
+          generate_release_notes: false
+          body: |
+            Automatically synchronized from https://github.com/Tauber01/ZENCHE (branch main).
+            Upstream commit: ${{ needs.sync.outputs.upstream_sha }}.
+            Unofficial test build: Android APK and, if successful, an unsigned iOS IPA. Windows/macOS official packages require proprietary SDKs not present in this repository.
+          files: dist/*
+          fail_on_unmatched_files: true

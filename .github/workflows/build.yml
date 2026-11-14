@@ -55,7 +55,14 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
+      # macos-15 已预装 Android cmdline-tools；setup-android@v3 在 2026
+      # 对已移除的 sdkmanager "tools" 包执行安装会失败。
+      - name: Confirm Android SDK command-line tools
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME:-}"
+          command -v sdkmanager
+          sdkmanager --version
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.10.2"

@@ -3,6 +3,12 @@ set -euo pipefail
 
 PROJECT_ROOT=${0:A:h:h}
 VERSION=1.5.15
+PREVIEW_NO_VENDOR_SDK=false
+case "${1:-}" in
+  "") ;;
+  "--preview-without-vendor-sdk") PREVIEW_NO_VENDOR_SDK=true ;;
+  *) echo "Usage: scripts/build-macos.sh [--preview-without-vendor-sdk]" >&2; exit 64 ;;
+esac
 ARCH=$(uname -m)
 BUILD_ROOT="$PROJECT_ROOT/build/macos"
 SDK_ROOT="$PROJECT_ROOT/build/nikon-sdk/macos"
@@ -34,6 +40,7 @@ mkdir -p "$CONTENTS/MacOS" "$RESOURCES/bin" "$RESOURCES/lib" \
   "$RESOURCES/camlibs" "$RESOURCES/iolibs" "$CONTENTS/Frameworks" \
   "$DIST_ROOT"
 
+if [[ "$PREVIEW_NO_VENDOR_SDK" != true ]]; then
 if [[ -f "$PROJECT_ROOT/S-SDKNEF-001BF-ALLIN.zip" &&
       -f "$PROJECT_ROOT/S-SDKZ-200BF-ALLIN.zip" ]]; then
   "$PROJECT_ROOT/scripts/prepare-nikon-sdk.sh" >/dev/null
@@ -52,6 +59,8 @@ elif [[ ! -f "$SONY_SDK_ROOT/include/CRSDK/CameraRemote_SDK.h" ||
   exit 1
 fi
 
+fi
+
 xcrun clang++ -std=c++17 -O2 -fvisibility=hidden \
   -c "$PROJECT_ROOT/native/macos/Sources/NikonLink/NikonSDKBridge.cpp" \
   -o "$BUILD_ROOT/NikonSDKBridge.o"
@@ -61,10 +70,20 @@ xcrun clang++ -std=c++17 -O2 \
   -framework CoreFoundation \
   -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
   -o "$CONTENTS/MacOS/ZENCHE-NikonSDKProbe"
-xcrun clang++ -std=c++17 -O2 -fvisibility=hidden \
-  -I "$SONY_SDK_ROOT/include" \
-  -c "$PROJECT_ROOT/native/macos/Sources/NikonLink/SonySDKBridge.cpp" \
-  -o "$BUILD_ROOT/SonySDKBridge.o"
+typeset -a sony_runtime_link_args
+sony_runtime_link_args=()
+if [[ "$PREVIEW_NO_VENDOR_SDK" == true ]]; then
+  xcrun clang++ -std=c++17 -O2 -c \
+    "$PROJECT_ROOT/native/macos/Sources/NikonLink/SonySDKBridgePreviewStub.cpp" \
+    -o "$BUILD_ROOT/SonySDKBridge.o"
+else
+  xcrun clang++ -std=c++17 -O2 -fvisibility=hidden \
+    -I "$SONY_SDK_ROOT/include" \
+    -c "$PROJECT_ROOT/native/macos/Sources/NikonLink/SonySDKBridge.cpp" \
+    -o "$BUILD_ROOT/SonySDKBridge.o"
+
+  sony_runtime_link_args=(-L "$SONY_SDK_ROOT/runtime" -lCr_Core)
+fi
 
 xcrun swiftc -swift-version 5 -O \
   -module-cache-path "$BUILD_ROOT/ModuleCache" \
@@ -75,7 +94,7 @@ xcrun swiftc -swift-version 5 -O \
   -Xlinker @executable_path/../Frameworks \
   -Xlinker "$BUILD_ROOT/NikonSDKBridge.o" \
   -Xlinker "$BUILD_ROOT/SonySDKBridge.o" \
-  -L "$SONY_SDK_ROOT/runtime" -lCr_Core -lc++ \
+  "${sony_runtime_link_args[@]}" -lc++ \
   "$PROJECT_ROOT/native/ios/NikonLink/Models/CameraStorage.swift" \
   "$PROJECT_ROOT/native/ios/NikonLink/Connectivity/RemoteCaptureServices.swift" \
   "$PROJECT_ROOT/native/shared/NikonCloudPreview.swift" \
@@ -88,6 +107,21 @@ xcrun clang++ -std=c++17 -O2 \
   -L "$LIBUSB_PREFIX/lib" -lusb-1.0 \
   -o "$RESOURCES/bin/zenche-nikon-ptp"
 cp "$PROJECT_ROOT/native/macos/Info.plist" "$CONTENTS/Info.plist"
+if [[ "$PREVIEW_NO_VENDOR_SDK" == true ]]; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.tauber.nikonlink.develop-preview" "$CONTENTS/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 帧澈 ZENCHE develop 预览版" "$CONTENTS/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleName 帧澈 ZENCHE develop 预览版" "$CONTENTS/Info.plist"
+  cat > "$RESOURCES/README-DEVELOP-PTP-ONLY.txt" <<'EOF'
+ZENCHE develop macOS PTP-only preview (UNOFFICIAL)
+This test build opens the native workspace without login or account registration.
+Nikon Remote SDK, Nikon Image SDK, and Sony Camera Remote SDK runtimes are NOT included.
+Features requiring these proprietary SDKs are unavailable. Generic PTP, PTP/IP, and
+local-library features require real hardware validation and are not guaranteed.
+This preview uses a separate bundle identifier so it does not overwrite the official app.
+This changes application identity and may affect device-bound activation or preferences.
+This is an ad-hoc-signed test build, NOT an official in-place upgrade.
+EOF
+fi
 cp "$PROJECT_ROOT/native/macos/Resources/wechat-donation.png" \
   "$RESOURCES/wechat-donation.png"
 cp "$PROJECT_ROOT/native/macos/Resources/camera-nikon.jpg" \
@@ -98,39 +132,42 @@ cp "$PROJECT_ROOT/native/macos/Resources/camera-canon.jpg" \
   "$RESOURCES/camera-canon.jpg"
 cp "$PROJECT_ROOT/native/macos/Resources/nikon-cloud-presets.json" \
   "$RESOURCES/nikon-cloud-presets.json"
-cp -R "$SDK_ROOT/Image/Frameworks/." "$CONTENTS/Frameworks/"
-cp -R "$SDK_ROOT/Remote/Frameworks/." "$CONTENTS/Frameworks/"
-cp "$SONY_SDK_ROOT/runtime/"*.dylib "$CONTENTS/Frameworks/"
-mkdir -p "$CONTENTS/Frameworks/CrAdapter"
-cp "$SONY_SDK_ROOT/runtime/CrAdapter/"*.dylib \
-  "$CONTENTS/Frameworks/CrAdapter/"
-mkdir -p "$RESOURCES/SonySDK"
-cp "$SONY_SDK_ROOT/documentation/Camera_Remote_SDK_Readme_v2.02.00.pdf" \
-  "$RESOURCES/SonySDK/"
-# Archives downloaded through a browser carry quarantine metadata. Leaving it
-# on nested SDK dylibs makes dyld reject them even after the enclosing app has
-# been signed, so clear only that inherited metadata before code signing.
-xattr -dr com.apple.quarantine "$CONTENTS/Frameworks" 2>/dev/null || true
-# Nikon's nested TestApp.zip expands Royalmile's framework aliases as real
-# duplicate files/directories. Restore the canonical versioned-framework
-# symlinks so codesign sees one bundle instead of three overlapping bundles.
-ROYALMILE_FRAMEWORK="$CONTENTS/Frameworks/Royalmile.framework"
-if [[ -d "$ROYALMILE_FRAMEWORK/Versions/A" ]]; then
-  rm -rf "$ROYALMILE_FRAMEWORK/Resources" \
-    "$ROYALMILE_FRAMEWORK/Royalmile" \
-    "$ROYALMILE_FRAMEWORK/Versions/Current"
-  ln -s "Versions/Current/Resources" "$ROYALMILE_FRAMEWORK/Resources"
-  ln -s "Versions/Current/Royalmile" "$ROYALMILE_FRAMEWORK/Royalmile"
-  ln -s "A" "$ROYALMILE_FRAMEWORK/Versions/Current"
+if [[ "$PREVIEW_NO_VENDOR_SDK" != true ]]; then
+  cp -R "$SDK_ROOT/Image/Frameworks/." "$CONTENTS/Frameworks/"
+  cp -R "$SDK_ROOT/Remote/Frameworks/." "$CONTENTS/Frameworks/"
+  cp "$SONY_SDK_ROOT/runtime/"*.dylib "$CONTENTS/Frameworks/"
+  mkdir -p "$CONTENTS/Frameworks/CrAdapter"
+  cp "$SONY_SDK_ROOT/runtime/CrAdapter/"*.dylib \
+    "$CONTENTS/Frameworks/CrAdapter/"
+  mkdir -p "$RESOURCES/SonySDK"
+  cp "$SONY_SDK_ROOT/documentation/Camera_Remote_SDK_Readme_v2.02.00.pdf" \
+    "$RESOURCES/SonySDK/"
+  # Archives downloaded through a browser carry quarantine metadata. Leaving it
+  # on nested SDK dylibs makes dyld reject them even after the enclosing app has
+  # been signed, so clear only that inherited metadata before code signing.
+  xattr -dr com.apple.quarantine "$CONTENTS/Frameworks" 2>/dev/null || true
+  # Nikon's nested TestApp.zip expands Royalmile's framework aliases as real
+  # duplicate files/directories. Restore the canonical versioned-framework
+  # symlinks so codesign sees one bundle instead of three overlapping bundles.
+  ROYALMILE_FRAMEWORK="$CONTENTS/Frameworks/Royalmile.framework"
+  if [[ -d "$ROYALMILE_FRAMEWORK/Versions/A" ]]; then
+    rm -rf "$ROYALMILE_FRAMEWORK/Resources" \
+      "$ROYALMILE_FRAMEWORK/Royalmile" \
+      "$ROYALMILE_FRAMEWORK/Versions/Current"
+    ln -s "Versions/Current/Resources" "$ROYALMILE_FRAMEWORK/Resources"
+    ln -s "Versions/Current/Royalmile" "$ROYALMILE_FRAMEWORK/Royalmile"
+    ln -s "A" "$ROYALMILE_FRAMEWORK/Versions/Current"
+  fi
+  cp -R "$SDK_ROOT/Remote/TypeCommon Module.bundle" "$CONTENTS/MacOS/"
+  cp -R "$SDK_ROOT/Remote/Config/." "$CONTENTS/MacOS/"
+  mkdir -p "$RESOURCES/NikonSDK/Remote/Config" \
+    "$RESOURCES/NikonSDK/Image/Profiles"
+  cp -R "$SDK_ROOT/Remote/Config/." "$RESOURCES/NikonSDK/Remote/Config/"
+  cp -R "$SDK_ROOT/Image/Resources/Profiles/." \
+    "$RESOURCES/NikonSDK/Image/Profiles/"
+  cp "$SDK_ROOT/Image/Resources/prm.bin" "$RESOURCES/prm.bin"
+
 fi
-cp -R "$SDK_ROOT/Remote/TypeCommon Module.bundle" "$CONTENTS/MacOS/"
-cp -R "$SDK_ROOT/Remote/Config/." "$CONTENTS/MacOS/"
-mkdir -p "$RESOURCES/NikonSDK/Remote/Config" \
-  "$RESOURCES/NikonSDK/Image/Profiles"
-cp -R "$SDK_ROOT/Remote/Config/." "$RESOURCES/NikonSDK/Remote/Config/"
-cp -R "$SDK_ROOT/Image/Resources/Profiles/." \
-  "$RESOURCES/NikonSDK/Image/Profiles/"
-cp "$SDK_ROOT/Image/Resources/prm.bin" "$RESOURCES/prm.bin"
 for localization in zh-Hans en ja; do
   mkdir -p "$RESOURCES/$localization.lproj"
   cp "$PROJECT_ROOT/native/ios/NikonLink/$localization.lproj/Localizable.strings" \
@@ -223,17 +260,28 @@ for framework_binary in \
   [[ -f "$framework_binary" ]] || continue
   codesign --force --sign - --timestamp=none "$framework_binary"
 done
-codesign --force --deep --sign - --timestamp=none \
-  "$CONTENTS/MacOS/TypeCommon Module.bundle"
+if [[ -d "$CONTENTS/MacOS/TypeCommon Module.bundle" ]]; then
+  codesign --force --deep --sign - --timestamp=none \
+    "$CONTENTS/MacOS/TypeCommon Module.bundle"
+fi
 codesign --force --sign - --timestamp=none \
   "$CONTENTS/MacOS/ZENCHE-NikonSDKProbe"
 codesign --force --deep --sign - --timestamp=none \
   --entitlements "$PROJECT_ROOT/native/macos/Entitlements.plist" "$APP_ROOT"
 
-DMG_PATH="$DIST_ROOT/ZENCHE-$VERSION-macOS-$ARCH.dmg"
+DMG_SUFFIX=""
+if [[ "$PREVIEW_NO_VENDOR_SDK" == true ]]; then
+  DMG_SUFFIX="-develop-PTP-only"
+fi
+DMG_PATH="$DIST_ROOT/ZENCHE-$VERSION-macOS-$ARCH$DMG_SUFFIX.dmg"
 rm -f "$DMG_PATH"
 mkdir -p "$DMG_ROOT"
-cp -R "$APP_ROOT" "$DMG_ROOT/"
+if [[ "$PREVIEW_NO_VENDOR_SDK" == true ]]; then
+  cp -R "$APP_ROOT" "$DMG_ROOT/帧澈 ZENCHE develop 预览版.app"
+  cp "$RESOURCES/README-DEVELOP-PTP-ONLY.txt" "$DMG_ROOT/README-DEVELOP-PTP-ONLY.txt"
+else
+  cp -R "$APP_ROOT" "$DMG_ROOT/"
+fi
 ln -s /Applications "$DMG_ROOT/Applications"
 hdiutil create -volname "帧澈 ZENCHE $VERSION" -srcfolder "$DMG_ROOT" \
   -format UDZO -ov "$DMG_PATH"

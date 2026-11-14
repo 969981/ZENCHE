@@ -32,7 +32,7 @@
   !define APP_INSTALL_DIR "$PROGRAMFILES64\帧澈 ZENCHE"
   !define APP_REG_ROOT HKLM
   !define APP_REG_KEY "Software\NikonLink"
-  !define APP_UNINSTALL_REG "${APP_UNINSTALL_REG}"
+  !define APP_UNINSTALL_REG "Software\Microsoft\Windows\CurrentVersion\Uninstall\NikonLink"
   !define APP_SHORTCUT "帧澈 ZENCHE.lnk"
   !define APP_UNINSTALL_SHORTCUT "卸载 帧澈 ZENCHE.lnk"
   !define APP_SHELL_CONTEXT all
@@ -99,7 +99,7 @@ check_running:
 app_closed:
 FunctionEnd
 
-Section "帧澈 ZENCHE" SecApplication
+Section "${APP_DISPLAY_NAME}" SecApplication
   SectionIn RO
   SetShellVarContext ${APP_SHELL_CONTEXT}
   SetRegView 64
@@ -111,7 +111,7 @@ Section "帧澈 ZENCHE" SecApplication
   WriteRegStr ${APP_REG_ROOT} "${APP_REG_KEY}" "InstallDir" "$INSTDIR"
 
   WriteRegStr ${APP_REG_ROOT} "${APP_UNINSTALL_REG}" \
-    "DisplayName" "帧澈 ZENCHE"
+    "DisplayName" "${APP_DISPLAY_NAME}"
   WriteRegStr ${APP_REG_ROOT} "${APP_UNINSTALL_REG}" \
     "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr ${APP_REG_ROOT} "${APP_UNINSTALL_REG}" \

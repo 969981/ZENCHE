@@ -73,7 +73,7 @@ test('All native login entry points are absent; device activation remains separa
   const paths = [iosPath, macPath, macSettingsPath, androidPath, harmonyPath, windowsXamlPath, windowsCodePath];
   const sources = await Promise.all(paths.map(read));
   assert.ok(sources.every((source) => !/还没有账号？切换到|登录后使用拍摄、编辑与 AI 功能/.test(source)));
-  assert.match(sources[0], /AuthTokenStore\.readToken\(\)/); // legacy optional AI linking only
+  assert.ok(sources.every((source) => !/Bearer/.test(source)), 'native AI calls must not send account Bearer tokens');
   assert.match(sources[3], /activation/i);
   assert.match(sources[4], /activation/i);
 });

@@ -11,6 +11,13 @@
 - AI 使用原有设备标识、激活码及服务端配额体系；免账号启动 **不等于 AI 云端功能免费或免激活**。旧的账号服务端 API 与认证类文件暂保留以免破坏已有客户端及迁移数据，但不再阻断 `develop` 五端本地工作区。
 - 发布与质量：2026-11-14 的 [develop CI Run 43605909835](https://github.com/969981/ZENCHE/actions/runs/43605909835) 五个 Job 全部通过，Node 测试 612 项（603 通过、9 跳过）；产生 iOS 未签名 IPA 与 Android 调试 APK。Windows 已编译，macOS 已完成 Swift 类型检查，但专有 SDK 不在 CI 仓库，尚无 Windows Setup/macOS DMG；HarmonyOS 缺 DevEco 工具链尚未编译。签名连续性和五端实机验证尚未完成，不得替代现有稳定版。
 
+## develop 预览交付现状（2026-11-14）
+
+- [Actions 完整验证](https://github.com/969981/ZENCHE/actions/runs/43609315150)：五项 Jobs（Node 回归、iOS、Android、Windows、macOS）全部成功，已上传 unsigned iOS IPA、debug Android APK、Windows 独立安装器与 ZIP、macOS ad-hoc DMG（含对应 SHA-256 侧车）。
+- Windows / macOS 标注 `develop-PTP-only`，不捆绑 Nikon Remote SDK、Nikon Image SDK、Sony Camera Remote SDK，不得承诺厂商专用功能完整可用。Windows 使用 HKCU、独立安装目录、快捷方式和卸载注册表项；macOS 使用独立 Bundle ID 和独立 .app 名称，不替换正式版；两个预览包均非正式升级。
+- iOS 未签名 IPA 和 Android debug APK 均不能替代正式签名更新。HarmonyOS 5.0 / API12 工程尚需 DevEco/Hvigor 工具链及相应签名配置，尚未生成 HAP。真实设备上的连接、拍摄、重装后设备码连续性均须继续验收。
+- AI 设备绑定及配额保留，旧账号 API 仅留作历史客户端兼容；原生五端启动入口不再要求账号。
+
 ## 1. 项目定位
 
 帧澈 ZENCHE 是一套本地优先的原生跨平台相机控制与影像传输工具，围绕摄影现场的完整工作流组织能力：连接相机、实时监看、调整参数、自动拍摄、接收影像、整理素材、非破坏性处理、导出与诊断。

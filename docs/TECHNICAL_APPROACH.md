@@ -14,6 +14,14 @@
 5. **回归测试**：用 `test/native-account-free-launch.test.mjs` 验证五端免账号路由；退役原有断言“登录墙必须存在”的五份 UI 契约测试，保留独立账号服务安全层测试供兼容性维护。保留主工作区、网络连接、相机状态、机内文件库专项测试。
 6. **交付边界**：[develop CI Run 43605909835](https://github.com/969981/ZENCHE/actions/runs/43605909835) 的 Node 回归、iOS 未签名构建、Android 调试构建、macOS 类型检查、Windows `dotnet build` 全部成功（测试 603 通过、0 失败、9 跳过）；Android APK 和 iOS IPA 可从 Actions Artifacts 取回。Windows Setup/macOS DMG 缺专有 SDK 无法在公开 CI 环境打包，HarmonyOS HAP 缺 DevEco 工具链；五端硬件实测、正式签名与设备码升级连续性未闭环，不能把调试包冒充稳定版更新。
 
+## develop 分离预览包与构建边界（2026-11-14）
+
+- Windows：`scripts/build-windows.ps1 -PreviewWithoutVendorSdk` 使用 `native/windows/Installer/NikonLink.nsi` 的 `ZENCH_DEVELOP_PREVIEW` 标记，产出 `ZENCHE-1.5.15-Windows-x64-develop-PTP-only-Setup.exe` 和 ZIP、SHA-256；预览版采用 HKCU + `%LOCALAPPDATA%\\Programs\\ZENCHE-develop-preview` 与独立卸载键。默认构建未改变，仍需要厂商 SDK 和既有签名约束。
+- macOS：`scripts/build-macos.sh --preview-without-vendor-sdk` 改用 `SonySDKBridgePreviewStub.cpp` 返回明确的 SDK 不可用值；尼康动态探测仍走现有桥接，但不捆绑 Nikon/Sony SDK 运行库。打包名为 `ZENCHE-1.5.15-macOS-arm64-develop-PTP-only.dmg`，Bundle ID `com.tauber.nikonlink.develop-preview`，ad-hoc 签名，不作为稳定版原地升级；设备码与激活数据连续性不得从该独立 Bundle ID 推断。
+- 五端更新公告增加 develop 预览告知。AI 服务端激活码及配额判定不变。
+- 公共 Actions `build.yml` 对 `develop` 运行五端回归以及 Windows、macOS 无厂商 SDK 的预览打包；HarmonyOS 5.0 / API12 HAP 仍依赖匹配的 DevEco Studio 命令行工具、Hvigor 与签名。不能以其他 SDK/API 环境“伪成功”。
+- CI 依据：[run 43609315150](https://github.com/969981/ZENCHE/actions/runs/43609315150)，四平台制品与校验侧车已在 Artifacts，Node 回归与构建均通过；硬件、发行签名仍未验收。
+
 ## 0. 1.4.0 AI 链路约定
 
 - 客户端把当前照片编码为完整 `data:image/...;base64,...` URL，通过代理的 `images` 数组传给 Grsai `/v1/api/generate`，并轮询 `/v1/api/result?id=...`。

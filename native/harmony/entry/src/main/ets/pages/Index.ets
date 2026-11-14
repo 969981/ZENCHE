@@ -8544,6 +8544,7 @@ struct Index {
                 .fontColor($r('app.color.ink'))
                 .width('100%')
               Text(this.tr(
+                '• develop 预览：打开即进入原生功能，无需登录注册；AI 仍需设备激活码及配额。Windows/macOS PTP-only 包不含 Nikon/Sony 厂商 SDK，均非正式签名更新。\n' +
                 '• Android 与 HarmonyOS 将 PTP/IP 命令/事件双通道绑定到实际相机 Wi‑Fi 网络，避免相机热点无互联网、蜂窝仍为默认路由时走错出口。\n' +
                 '• Apple 连接层允许 Wi‑Fi 重关联期间的 waiting 在既有 deadline 内恢复；iOS 回到前台时立即补一次 Probe。\n' +
                 '• HarmonyOS 以真实 Probe 作为连接就绪屏障，并不再把 event reader 空闲超时误判为断线。\n' +

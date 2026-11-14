@@ -12,7 +12,7 @@
 3. **移动 Android / HarmonyOS**：入口默认 `capture`，不创建登录遮罩或进行 `/v1/auth/me` 验证；设置页不渲染账号信息、注销按钮。原生拍摄、传输和设置能力保留。
 4. **AI 与安全边界**：只取消进入本地应用工作区所需的账号凭据；不改写 AI 服务端的设备激活、配额、后台管理员认证及计费验证。账号服务端路由与原 AuthService/AuthManager 实现暂留兼容旧版本，但新 `develop` 原生 UI 不触发注册/登录；没有有效 AI 激活权益的用户不会因此取得云端额度。
 5. **回归测试**：用 `test/native-account-free-launch.test.mjs` 验证五端免账号路由；退役原有断言“登录墙必须存在”的五份 UI 契约测试，保留独立账号服务安全层测试供兼容性维护。保留主工作区、网络连接、相机状态、机内文件库专项测试。
-6. **交付边界**：CI/实机尚需核验，正式安装包需遵循 `AGENTS.md` 的既有签名身份与设备码连续性，不可把调试签名或不同签名身份的包冒充稳定版更新。
+6. **交付边界**：[develop CI Run 43605909835](https://github.com/969981/ZENCHE/actions/runs/43605909835) 的 Node 回归、iOS 未签名构建、Android 调试构建、macOS 类型检查、Windows `dotnet build` 全部成功（测试 603 通过、0 失败、9 跳过）；Android APK 和 iOS IPA 可从 Actions Artifacts 取回。Windows Setup/macOS DMG 缺专有 SDK 无法在公开 CI 环境打包，HarmonyOS HAP 缺 DevEco 工具链；五端硬件实测、正式签名与设备码升级连续性未闭环，不能把调试包冒充稳定版更新。
 
 ## 0. 1.4.0 AI 链路约定
 

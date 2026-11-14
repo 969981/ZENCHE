@@ -2,11 +2,41 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
   workflow_dispatch:
 
 jobs:
+  native-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm test
+
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Compile Windows native workspace
+        shell: pwsh
+        run: dotnet build native/windows/NikonLink.Windows.csproj --configuration Release
+      - name: Check proprietary SDK availability before installer packaging
+        shell: pwsh
+        run: |
+          if ((Test-Path "S-SDKNEF-001BF-ALLIN.zip") -and
+              (Test-Path "S-SDKZ-200BF-ALLIN.zip") -and
+              (Test-Path "CrSDK_v2.02.00_20260610a_Win64.zip")) {
+            Write-Host "SDKs supplied; installer packaging must use scripts/build-windows.ps1 with the matching official libusb DLL."
+          } else {
+            Write-Host "::notice::No Nikon/Sony SDK archives in Git checkout. Windows installer packaging is blocked; dotnet build validates source only."
+          }
+
   ios:
     runs-on: macos-15
     steps:

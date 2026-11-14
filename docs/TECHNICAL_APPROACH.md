@@ -5,6 +5,15 @@
 > 前置阅读：`AGENTS.md`、`docs/PROJECT_OUTLINE.md`、`docs/TASK_PROGRESS.md`
 > 注：`AGENTS.md` 于 2026-08-03 由项目负责人提供权威版并恢复纳入仓库版本控制，此前远端历史曾删除该文件。
 
+## develop：免账号启动技术约定（2026-11-14）
+
+1. **客户端路由**：iOS `RootView`、macOS `RootView` 直接渲染 `mainWorkspace`；启动时分别调用 `prepareLocalWorkspace()`，继续初始化设备工作区与更新提示，不再 `await auth.bootstrap()` 或根据 `auth.state` 阻断主视图。macOS 设置移除 `auth` 参数。
+2. **桌面 Windows**：`MainWindow_Loaded` 的初始化改调用 `EnterLocalWorkspaceAsync()`，保留 SDK 探测、更新检查和发布提示；删除 XAML `AuthWall`、登录注册表单和账号卡片。原有设备清理例程的登录事件触发入口一并移除，**不能**把退出登录误当成设备断开。
+3. **移动 Android / HarmonyOS**：入口默认 `capture`，不创建登录遮罩或进行 `/v1/auth/me` 验证；设置页不渲染账号信息、注销按钮。原生拍摄、传输和设置能力保留。
+4. **AI 与安全边界**：只取消进入本地应用工作区所需的账号凭据；不改写 AI 服务端的设备激活、配额、后台管理员认证及计费验证。账号服务端路由与原 AuthService/AuthManager 实现暂留兼容旧版本，但新 `develop` 原生 UI 不触发注册/登录；没有有效 AI 激活权益的用户不会因此取得云端额度。
+5. **回归测试**：用 `test/native-account-free-launch.test.mjs` 验证五端免账号路由；退役原有断言“登录墙必须存在”的五份 UI 契约测试，保留独立账号服务安全层测试供兼容性维护。保留主工作区、网络连接、相机状态、机内文件库专项测试。
+6. **交付边界**：CI/实机尚需核验，正式安装包需遵循 `AGENTS.md` 的既有签名身份与设备码连续性，不可把调试签名或不同签名身份的包冒充稳定版更新。
+
 ## 0. 1.4.0 AI 链路约定
 
 - 客户端把当前照片编码为完整 `data:image/...;base64,...` URL，通过代理的 `images` 数组传给 Grsai `/v1/api/generate`，并轮询 `/v1/api/result?id=...`。

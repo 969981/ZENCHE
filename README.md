@@ -23,6 +23,10 @@
 
 ## 简体中文
 
+### develop 开发分支：无需账号的原生工作区
+
+[`develop` 分支](https://github.com/969981/ZENCHE/tree/develop)在 iOS/iPadOS、Android、HarmonyOS、macOS 和 Windows 上移除了注册、登录、创建账号及退出登录界面，启动即可进入相机控制、拍摄、影像传输和文件库等原生功能。**这只是开发分支源码，尚未完成所有平台构建、签名和实机验证，不是 1.5.15 稳定版更新。** AI 云端功能依然按照既有设备激活码和配额验证，不因取消登录而免费；现有服务端账号 API 暂留旧版兼容。
+
 帧澈 ZENCHE 是一套本地优先的原生相机工作流工具：通过 USB/PTP 或 Wi‑Fi
 PTP/IP 连接相机，支持 BLE 遥控快门与拍摄位置 XMP GPS 标记，并可通过 FTP、
 HTTP 或 WebDAV 接收影像，再在同一个应用里完成预览、管理、导入与分享。
@@ -440,6 +444,10 @@ Nikon 及文中相机型号为 Nikon Corporation 的商标。本项目与 Nikon 
 
 ## English
 
+### develop branch: native workspace without account sign-in
+
+The [`develop` branch](https://github.com/969981/ZENCHE/tree/develop) removes the sign-in, registration, account creation, and sign-out screens on iOS/iPadOS, Android, HarmonyOS, macOS, and Windows. The native camera, capture, transfer, and library workspaces open directly. **This is development-branch source code, not a validated, signed, or officially released update to v1.5.15.** Cloud AI still requires the existing device activation and quota entitlement; legacy account server endpoints remain for backwards compatibility.
+
 **帧澈 ZENCHE** is a local-first, cross-platform camera control and image
 transfer tool for macOS, Windows, Android, HarmonyOS, and iOS/iPadOS.
 
@@ -817,6 +825,10 @@ project is not affiliated with, endorsed by, or sponsored by Nikon Corporation.
 <a id="日本語"></a>
 
 ## 日本語
+
+### develop 開発ブランチ：アカウント不要のネイティブ画面
+
+[`develop` ブランチ](https://github.com/969981/ZENCHE/tree/develop)では、iOS/iPadOS・Android・HarmonyOS・macOS・Windows のログイン、登録、アカウント作成、ログアウト画面を取り除き、起動後すぐにカメラ操作・撮影・画像転送・ライブラリなどのネイティブ機能を使用できます。**開発ブランチのソース変更であり、全環境でのビルド・署名・実機検証は未完了です。v1.5.15 の正式なアップデートではありません。** クラウド AI には引き続き機器のアクティベーションと利用枠が必要です。旧版との互換性のためサーバーのアカウント API は残しています。
 
 **帧澈 ZENCHE** は、macOS、Windows、Android、HarmonyOS、iOS/iPadOS に対応する、
 ローカル優先設計のクロスプラットフォーム・カメラ制御／画像転送ツールです。

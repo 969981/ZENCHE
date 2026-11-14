@@ -1433,7 +1433,7 @@ public partial class MainWindow : Window
 
     private void AiCopyDeviceId_Click(object sender, RoutedEventArgs e)
     {
-        Clipboard.SetText(GetDeviceId());
+        System.Windows.Clipboard.SetText(GetDeviceId());
         AiActivationStatusText.Text = AppLocalization.T("设备 ID 已复制，可前往官网兑换密钥");
     }
 #if NIKONLINK_WINDOWS_SHARE

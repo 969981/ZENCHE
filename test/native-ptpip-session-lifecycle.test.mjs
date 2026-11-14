@@ -479,27 +479,26 @@ test('Android cancelled Wi-Fi connects cannot republish stale sessions', async (
   );
 });
 
-test('Android auth cleanup invalidates in-flight Wi-Fi and local-camera connects', async () => {
+test('Android account-free disconnect and app shutdown invalidate pending camera sessions', async () => {
   const source = await read(
     'native/android/app/src/main/java/com/tauber/nikonlink/MainActivity.java',
   );
-  const closeAuth = blockStartingAt(source, 'private void closeAuthSensitiveState()');
+  const manualDisconnect = blockStartingAt(source, 'private void disconnectWifiCamera()');
+  const onDestroy = blockStartingAt(source, 'protected void onDestroy()');
   const localConnect = blockStartingAt(source, 'private void connectLocalCamera()');
 
-  assert.match(closeAuth, /wifiManualDisconnect = true/);
-  assert.match(closeAuth, /wifiConnectionGeneration\+\+/);
-  assert.ok(
-    closeAuth.indexOf('wifiManualDisconnect = true') <
-      closeAuth.indexOf('wifiConnectionGeneration++'),
-    'auth cleanup must mark manual disconnect before invalidating Wi-Fi callbacks',
-  );
-  assert.match(closeAuth, /usbCameraConnectionGeneration\+\+/);
-  assert.match(closeAuth, /localCameraConnectionGeneration\+\+/);
+  assert.match(manualDisconnect, /wifiManualDisconnect = true/);
+  assert.match(manualDisconnect, /wifiConnectionGeneration\+\+/);
+  assert.match(manualDisconnect, /wifiCamera\.abortTransport\(\)/);
+  assert.match(onDestroy, /wifiConnectionGeneration\+\+/);
+  assert.match(onDestroy, /usbCameraConnectionGeneration\+\+/);
+  assert.match(onDestroy, /localCameraConnectionGeneration\+\+/);
+  assert.match(onDestroy, /wifiManualDisconnect = true/);
   assert.match(localConnect, /connectionGeneration = \+\+localCameraConnectionGeneration/);
   assert.ok(
     (localConnect.match(/connectionGeneration != localCameraConnectionGeneration/g)
       ?? []).length >= 3,
-    'local-camera worker and callbacks must reject an invalidated generation',
+    'in-flight local camera workers and callbacks reject invalidated generation',
   );
 });
 

@@ -14,7 +14,7 @@ test('All five native update announcements explain develop account-free preview 
     'native/windows/MainWindow.xaml.cs'
   ].map(read));
   for (const source of sources) {
-    assert.match(source, /develop 预览：打开即进入原生功能/);
-    assert.match(source, /Windows\/macOS PTP-only 包不含 Nikon\/Sony 厂商 SDK/);
+    assert.match(source, /develop 预览版：打开即可使用相机工作区/);
+    assert.match(source, /Windows\/macOS PTP-only 包不含 Nikon\/Sony 专有 SDK/);
   }
 });

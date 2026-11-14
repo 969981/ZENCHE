@@ -354,6 +354,7 @@ final class Localization {
                 "アプリの機能は無料のままで、ご支援は任意です。");
         add("更新公告", "What's New", "アップデートのお知らせ");
         add("本次更新", "In This Update", "今回の更新");
+        add("develop 预览版：打开即可使用相机工作区，无需登录注册；云端 AI 仍需设备激活码和额度。Windows/macOS PTP-only 包不含 Nikon/Sony 专有 SDK，不能当作正式升级。", "develop preview: The camera workspace opens without sign-in or registration. Cloud AI still requires device activation and usage quota. Windows/macOS PTP-only packages omit proprietary Nikon/Sony SDKs and are not official upgrades.", "develop プレビュー：ログイン・登録なしでカメラ画面を開けます。クラウド AI には機器の有効化と利用枠が引き続き必要です。Windows/macOS の PTP-only パッケージには Nikon/Sony 専用 SDK が含まれず、正式な更新ではありません。");
         add("• 修复 AI 修图原图链路：客户端发送当前选中照片的完整 data:image 数据，代理按上游要求放入 images 并等待任务完成，修图结果真正基于原图。\n"
                         + "• AI 修图成功后覆盖当前原图并保留文件记录；AI 生图仍保存为新文件，避免混淆。\n"
                         + "• AI 次数由服务器统一扣减并回传剩余次数；失败请求自动回滚，不再出现调用未扣次数。\n"
